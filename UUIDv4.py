@@ -1,4 +1,8 @@
+from typing import Any
 from uuid import UUID, SafeUUID
+
+from pydantic import GetCoreSchemaHandler
+from pydantic_core import core_schema, CoreSchema
 
 class UUIDv4(UUID):
     def __init__(
@@ -17,3 +21,18 @@ class UUIDv4(UUID):
 
         if self.version != 4:
             raise ValueError(f"{self} is not a valid UUIDv4")
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls,
+        source_type: Any,
+        handler: GetCoreSchemaHandler
+    ) -> CoreSchema:
+        
+        return core_schema.no_info_after_validator_function(
+            function=lambda x: cls(str(x)),
+            schema=core_schema.uuid_schema(version=4),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                function=lambda x: str(x)
+            )
+        )
